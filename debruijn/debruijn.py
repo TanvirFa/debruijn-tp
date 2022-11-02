@@ -97,7 +97,11 @@ def build_kmer_dict(fastq_file, kmer_size):
 
 
 def build_graph(kmer_dict):
-    pass
+	graph_kmer=nx.DiGraph()
+	for i in kmer_dict:
+		print(i)
+		graph_kmer.add_edge(i[:-1],i[1:],weight=kmer_dict[i])
+	return graph_kmer
 
 
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
