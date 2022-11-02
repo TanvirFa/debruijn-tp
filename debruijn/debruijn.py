@@ -71,11 +71,18 @@ def get_arguments():
 
 
 def read_fastq(fastq_file):
-    pass
+	with open (fastq_file) as file:
+		for i in file:
+			yield next(file).strip("\n")
+			next(file)
+			next(file)
 
 
-def cut_kmer(read, kmer_size):
-    pass
+def cut_kmer(read,kmer_size):
+    count=0
+    while((count+kmer_size)<len(read)):
+		yield read[count:count+kmer_size]
+		count+=1
 
 
 def build_kmer_dict(fastq_file, kmer_size):
