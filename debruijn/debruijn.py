@@ -79,14 +79,21 @@ def read_fastq(fastq_file):
 
 
 def cut_kmer(read,kmer_size):
-    count=0
-    while((count+kmer_size)<len(read)):
-		yield read[count:count+kmer_size]
+	count=0
+	while((count+kmer_size)<=len(read)):
+		yield read[count:(count+kmer_size)]
 		count+=1
 
 
 def build_kmer_dict(fastq_file, kmer_size):
-    pass
+	dic_kmer={}
+	for i in read_fastq(fastq_file):
+		for j in cut_kmer(i,kmer_size):
+			if j in dic_kmer:
+				dic_kmer[j]+=1
+			else:
+				dic_kmer.update({j:1})
+	return dic_kmer
 
 
 def build_graph(kmer_dict):
