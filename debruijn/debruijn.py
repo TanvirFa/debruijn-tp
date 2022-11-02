@@ -119,7 +119,20 @@ def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
 
 def select_best_path(graph, path_list, path_length, weight_avg_list, 
                      delete_entry_node=False, delete_sink_node=False):
-    pass
+    if(statistics.stdev(weight_avg_list)>0):
+        ind=weight_avg_list.index(max(weight_avg_list))
+        path_list.pop(ind) 
+        graph=remove_paths(graph,path_list,delete_entry_node, delete_sink_node)
+    elif(statistics.stdev(path_length)>0):
+        ind=path_length.index(max(path_length))
+        path_list.pop(ind)
+        graph=remove_paths(graph,path_list,delete_entry_node, delete_sink_node)
+    else:
+        random.seed(9001)
+        r=random.randint(0, len(path_list))
+        path_list.pop(r)
+        graph=remove_paths(graph,path_list,delete_entry_node, delete_sink_node)
+    return graph
 
 def path_average_weight(graph, path):
     """Compute the weight of a path"""
