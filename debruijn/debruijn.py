@@ -105,7 +105,16 @@ def build_graph(kmer_dict):
 
 
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
-    pass
+	for p in path_list:
+		if(delete_entry_node and delete_sink_node):
+			graph.remove_nodes_from(p) 
+		elif(delete_entry_node):
+			graph.remove_nodes_from(p[:-1]) 
+		elif(delete_sink_node):
+			graph.remove_nodes_from(p[1:]) 
+		else:
+			graph.remove_nodes_from(p[1:-1]) 
+	return graph
 
 
 def select_best_path(graph, path_list, path_length, weight_avg_list, 
@@ -129,16 +138,47 @@ def solve_out_tips(graph, ending_nodes):
     pass
 
 def get_starting_nodes(graph):
-    pass
+	l_first_nodes=[]
+	for i in graph.nodes:
+		it=list(graph.predecessors(i))
+		if (len(it)==0):
+			l_first_nodes.append(i)
+	return l_first_nodes
 
 def get_sink_nodes(graph):
-    pass
+	l_last_nodes=[]
+	for i in graph.nodes:
+		it=list(graph.successors(i))
+		if (len(it)==0):
+			l_last_nodes.append(i)
+	return l_last_nodes
+
 
 def get_contigs(graph, starting_nodes, ending_nodes):
-    pass
+	list_contig=[]
+	seq = " "
+	for i in starting_nodes:
+		for j in ending_nodes:
+			if(nx.has_path(graph, i, j)):
+				for k in nx.all_simple_paths(graph, source=i, target=j):
+					seq +=k[0]
+					for kmer in k[1:-1]:
+						seq+=kmer[-1]
+					seq +=j
+					list_contig.append((seq,len(seq)))
+					seq = " "
+	return list_contig
+		
 
 def save_contigs(contigs_list, output_file):
-    pass
+	file=open(output_file+".fasta","w")
+	count=0
+	for contig in contigs_list:
+		file.write(textwrap.fill(">contig_"+str(count)+" len="+str(contig[1]),width=80))
+		file.write("\n")
+		file.write(textwrap.fill(contig[0], width=80))
+		file.write("\n")
+	file.close()
 
 
 def draw_graph(graph, graphimg_file):
