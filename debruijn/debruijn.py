@@ -324,6 +324,15 @@ def main():
     """
     # Get arguments
     args = get_arguments()
+    #en arguments le fichier input et nom fichier output
+	kmer_size=10
+	graph=build_graph(build_kmer_dict(args[0],kmer_size))
+	graph=simplify_bubbles(graph)
+	start_nodes=get_starting_nodes(graph)
+	end_nodes=get_sink_nodes(graph)
+	graph=solve_entry_tips(graph,start_nodes)
+	graph=solve_out_tips(graph,end_nodes)
+	save_contigs(get_contigs(graph,start_nodes,end_nodes),args[1])
 
     # Fonctions de dessin du graphe
     # A decommenter si vous souhaitez visualiser un petit 
