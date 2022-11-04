@@ -169,17 +169,16 @@ def get_sink_nodes(graph):
 
 def get_contigs(graph, starting_nodes, ending_nodes):
 	list_contig=[]
-	seq = " "
+	seq = ""
 	for i in starting_nodes:
 		for j in ending_nodes:
 			if(nx.has_path(graph, i, j)):
 				for k in nx.all_simple_paths(graph, source=i, target=j):
-					seq +=k[0]
-					for kmer in k[1:-1]:
+					seq +=i
+					for kmer in k[1:]:
 						seq+=kmer[-1]
-					seq +=j
 					list_contig.append((seq,len(seq)))
-					seq = " "
+					seq = ""
 	return list_contig
 		
 
