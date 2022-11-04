@@ -99,7 +99,6 @@ def build_kmer_dict(fastq_file, kmer_size):
 def build_graph(kmer_dict):
 	graph_kmer = nx.DiGraph()
 	for i in kmer_dict:
-		print(i)
 		graph_kmer.add_edge(i[:-1],i[1:],weight = kmer_dict[i])
 	return graph_kmer
 
@@ -159,11 +158,11 @@ def simplify_bubbles(graph):
 		liste_predecesseurs = list(graph.predecessors(i))
 		if len(liste_predecesseurs) > 1:
 			for j in liste_predecesseurs :
-				noeud_ancetre = nx.lowest_common_ancestor(graph,i,j)
-				if noeud_ancetre != None:
-					if(len(list(nx.all_simple_paths(graph, source=noeud_ancetre, target=i))) > 1):
-						bubble = True
-						break
+				for pre in liste_predecesseurs:
+					noeud_ancetre = nx.lowest_common_ancestor(graph,pre,j)
+					if noeud_ancetre != None:
+							bubble = True
+							break
 		if bubble:
 			break
 	# La simplification ayant pour conséquence de supprimer des noeuds du hash
@@ -179,7 +178,6 @@ def drop_entry_tips(graph,list_prec,noeud_n):
 	#len(path_list)=1 car il n'y a plus de bulle
 	for ancestor_node in list_prec:
 		path_list.append(list(nx.all_simple_paths(graph, source=ancestor_node, target = noeud_n))[0])
-		print(path_list)
 		for i in path_list:
 			lw = []
 			path_lenght.append(len(i))
@@ -219,6 +217,7 @@ def solve_entry_tips(graph, starting_nodes):
 				if j in starting_nodes:
 					count += 1
 					prec_list.append(j)
+					print(prec_list)
 			if count > 1:
 				tips = True
 				break
