@@ -104,15 +104,25 @@ def build_graph(kmer_dict):
 
 
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
-	for p in path_list:
+	if(type(path_list[0]) != int):
+		for p in path_list:
+			if(delete_entry_node and delete_sink_node):
+				graph.remove_nodes_from(p) 
+			elif(delete_entry_node):
+				graph.remove_nodes_from(p[:-1]) 
+			elif(delete_sink_node):
+				graph.remove_nodes_from(p[1:]) 
+			else:
+				graph.remove_nodes_from(p[1:-1]) 
+	else:
 		if(delete_entry_node and delete_sink_node):
-			graph.remove_nodes_from(p) 
+				graph.remove_nodes_from(path_list) 
 		elif(delete_entry_node):
-			graph.remove_nodes_from(p[:-1]) 
+			graph.remove_nodes_from(path_list[:-1]) 
 		elif(delete_sink_node):
-			graph.remove_nodes_from(p[1:]) 
+			graph.remove_nodes_from(path_list[1:]) 
 		else:
-			graph.remove_nodes_from(p[1:-1]) 
+			graph.remove_nodes_from(path_list[1:-1]) 
 	return graph
 
 
@@ -178,14 +188,22 @@ def drop_entry_tips(graph,list_prec,noeud_n):
 	#len(path_list)=1 car il n'y a plus de bulle
 	for ancestor_node in list_prec:
 		path_list.append(list(nx.all_simple_paths(graph, source=ancestor_node, target = noeud_n))[0])
-		for i in path_list:
-			lw = []
-			path_lenght.append(len(i))
-			l = list(graph.subgraph(i).edges(data=True))
-			for j in l:
-				lw.append(j[2]['weight'])
-			weight_avg_list.append(statistics.mean(lw))
-	graph = select_best_path(graph, path_list, path_lenght, weight_avg_list,delete_entry_node = True, delete_sink_node = False)
+	for i in path_list:
+		lw = []
+		path_lenght.append(len(i))
+		l = list(graph.subgraph(i).edges(data=True))
+		for j in l:
+			lw.append(j[2]['weight'])
+		weight_avg_list.append(statistics.mean(lw))
+	#graph = select_best_path(graph, path_list, path_lenght, weight_avg_list,delete_entry_node = True, delete_sink_node = False)
+	ind_len= path_lenght.index(min(path_lenght))
+	ind_w = weight_avg_list.index(min(weight_avg_list))
+	if(ind_len==ind_w): 
+		graph = remove_paths(graph,path_list[ind_w],True, False)
+	elif(path_lenght[ind_w] == min(path_lenght)):
+		graph = remove_paths(graph,path_list[ind_w], True,False)
+	elif(weight_avg_list[ind_len] == min(weight_avg_list)):
+		graph = remove_paths(graph,path_list[ind_len],True, False)
 	return graph
 
 def drop_out_tips(graph,list_successor,noeud_n):
@@ -194,15 +212,23 @@ def drop_out_tips(graph,list_successor,noeud_n):
 	path_list = []
 	#len(path_list)=1 car il n'y a plus de bulle
 	for ancestor_node in list_successor:
-		path_list.append(list(nx.all_simple_paths(graph, source=noeud_n, target = list_successor))[0])
-		for i in path_list:
-			lw = []
-			path_lenght.append(len(i))
-			l = list(graph.subgraph(i).edges(data=True))
-			for j in l:
-				lw.append(j[2]['weight'])
-			weight_avg_list.append(statistics.mean(lw))
-	graph = select_best_path(graph, path_list, path_lenght, weight_avg_list,delete_entry_node = False, delete_sink_node = True)
+		path_list.append(list(nx.all_simple_paths(graph, source=noeud_n, target = ancestor_node))[0])
+	for i in path_list:
+		lw = []
+		path_lenght.append(len(i))
+		l = list(graph.subgraph(i).edges(data=True))
+		for j in l:
+			lw.append(j[2]['weight'])
+		weight_avg_list.append(statistics.mean(lw))
+	ind_len= path_lenght.index(min(path_lenght))
+	ind_w = weight_avg_list.index(min(weight_avg_list))
+	if(ind_len==ind_w): 
+		graph = remove_paths(graph,path_list[ind_w],False, True)
+	elif(path_lenght[ind_w] == min(path_lenght)):
+		graph = remove_paths(graph,path_list[ind_w], False,True)
+	elif(weight_avg_list[ind_len] == min(weight_avg_list)):
+		graph = remove_paths(graph,path_list[ind_len],False, True)
+	#graph = select_best_path(graph, path_list, path_lenght, weight_avg_list,delete_entry_node = False, delete_sink_node = True)
 	return graph
 
 def solve_entry_tips(graph, starting_nodes):
@@ -215,17 +241,21 @@ def solve_entry_tips(graph, starting_nodes):
 		if len(liste_predecesseurs) > 1:
 			for j in liste_predecesseurs :
 				if j in starting_nodes:
-					count += 1
-					prec_list.append(j)
-					print(prec_list)
+						count += 1
+						prec_list.append(j)
+				for pred in (list(graph.predecessors(j))):
+					if pred in starting_nodes:
+						if(pred not in prec_list):
+							count += 1
+							prec_list.append(pred)
 			if count > 1:
 				tips = True
 				break
 		if tips:
 			break
 	if tips:
-	  graph = drop_entry_tips(graph,prec_list,noeud_n)		
-	  graph = solve_entry_tips(graph,starting_nodes)
+		graph = drop_entry_tips(graph,prec_list,noeud_n)
+		graph = solve_entry_tips(graph,get_starting_nodes(graph))
 	return graph
 
 def solve_out_tips(graph, ending_nodes):
@@ -237,9 +267,13 @@ def solve_out_tips(graph, ending_nodes):
 		liste_successeurs = list(graph.successors(i))
 		if len(liste_successeurs) > 1:
 			for j in liste_successeurs :
-				if j in ending_nodes:
+				if j in ending_nodes and j not in successor_list:
 					count+=1
 					successor_list.append(j)
+				for pred in (list(graph.successors(j))):
+					if pred in ending_nodes and pred not in successor_list:
+						count += 1
+						successor_list.append(pred)
 			if count > 1:
 				tips = True
 				break
@@ -247,7 +281,7 @@ def solve_out_tips(graph, ending_nodes):
 			 break
 	if tips:
 		graph = drop_out_tips(graph,successor_list,noeud_n)		
-		graph = solve_out_tips(graph,ending_nodes)
+		graph = solve_out_tips(graph,get_sink_nodes(graph))
 	return graph
 
 
