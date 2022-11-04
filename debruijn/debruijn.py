@@ -157,12 +157,14 @@ def simplify_bubbles(graph):
 	for i in graph.nodes:
 		noeud_n=i
 		liste_predecesseurs =list(graph.predecessors(i))
+		print(i)
 		if len(liste_predecesseurs) > 1:
 			for j in liste_predecesseurs :
 				noeud_ancetre = nx.lowest_common_ancestor(graph,i,j)
-				print(i,j)
 				if noeud_ancetre != None:
+					print(i,j)
 					if(len(list(nx.all_simple_paths(graph, source=noeud_ancetre, target=i)))>1):
+						print(i,j)
 						bubble = True
 						break
 		if bubble:
@@ -179,7 +181,8 @@ def drop_entry_tips(graph,list_prec,noeud_n):
 	path_list=[]
 	#len(path_list)=1 car il n'y a plus de bulle
 	for ancestor_node in list_prec:
-		path_list.append(nx.all_simple_paths(graph, source=ancestor_node, target=noeud_n))
+		path_list.append(list(nx.all_simple_paths(graph, source=ancestor_node, target=noeud_n))[0])
+		print(path_list)
 		for i in path_list:
 			lw=[]
 			path_lenght.append(len(i))
@@ -195,8 +198,8 @@ def drop_out_tips(graph,list_successor,noeud_n):
 	weight_avg_list=[]
 	path_list=[]
 	#len(path_list)=1 car il n'y a plus de bulle
-	for ancestor_node in list_prec:
-		path_list.append(nx.all_simple_paths(graph, source=noeud_n, target=list_successor))
+	for ancestor_node in list_successor:
+		path_list.append(list(nx.all_simple_paths(graph, source=noeud_n, target=list_successor))[0])
 		for i in path_list:
 			lw=[]
 			path_lenght.append(len(i))
@@ -325,14 +328,14 @@ def main():
     # Get arguments
     args = get_arguments()
     #en arguments le fichier input et nom fichier output
-	kmer_size=10
-	graph=build_graph(build_kmer_dict(args[0],kmer_size))
-	graph=simplify_bubbles(graph)
-	start_nodes=get_starting_nodes(graph)
-	end_nodes=get_sink_nodes(graph)
-	graph=solve_entry_tips(graph,start_nodes)
-	graph=solve_out_tips(graph,end_nodes)
-	save_contigs(get_contigs(graph,start_nodes,end_nodes),args[1])
+    kmer_size=10
+    graph=build_graph(build_kmer_dict(args[0],kmer_size))
+    graph=simplify_bubbles(graph)
+    start_nodes=get_starting_nodes(graph)
+    end_nodes=get_sink_nodes(graph)
+    graph=solve_entry_tips(graph,start_nodes)
+    graph=solve_out_tips(graph,end_nodes)
+    save_contigs(get_contigs(graph,start_nodes,end_nodes),args[1])
 
     # Fonctions de dessin du graphe
     # A decommenter si vous souhaitez visualiser un petit 
