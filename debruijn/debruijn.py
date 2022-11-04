@@ -27,13 +27,13 @@ import textwrap
 import matplotlib.pyplot as plt
 matplotlib.use("Agg")
 
-__author__ = "Your Name"
+__author__ = "Tanvir Faruque"
 __copyright__ = "Universite Paris Diderot"
 __credits__ = ["Your Name"]
 __license__ = "GPL"
 __version__ = "1.0.0"
-__maintainer__ = "Your Name"
-__email__ = "your@email.fr"
+__maintainer__ = "Tanvir Faruque"
+__email__ = "tanvir.faruque@etu.u-paris.fr"
 __status__ = "Developpement"
 
 def isfile(path):
@@ -139,16 +139,118 @@ def path_average_weight(graph, path):
     return statistics.mean([d["weight"] for (u, v, d) in graph.subgraph(path).edges(data=True)])
 
 def solve_bubble(graph, ancestor_node, descendant_node):
-    pass
+	path_list=list(nx.all_simple_paths(graph, source=ancestor_node, target=descendant_node))
+	path_lenght=[]
+	weight_avg_list=[]
+	for i in path_list:
+		lw=[]
+		path_lenght.append(len(i))
+		l=list(graph.subgraph(i).edges(data=True))
+		for j in l:
+			lw.append(j[2]['weight'])
+		weight_avg_list.append(statistics.mean(lw))
+	graph=select_best_path(graph, path_list, path_lenght, weight_avg_list,delete_entry_node=False, delete_sink_node=False)
+	return graph
 
 def simplify_bubbles(graph):
-    pass
+	bubble = False 
+	for i in graph.nodes:
+		noeud_n=i
+		liste_predecesseurs =list(graph.predecessors(i))
+		if len(liste_predecesseurs) > 1:
+			for j in liste_predecesseurs :
+				noeud_ancetre = nx.lowest_common_ancestor(graph,i,j)
+				print(i,j)
+				if noeud_ancetre != None:
+					if(len(list(nx.all_simple_paths(graph, source=noeud_ancetre, target=i)))>1):
+						bubble = True
+						break
+		if bubble:
+			break
+	# La simplification ayant pour conséquence de supprimer des noeuds du hash
+	# Une approche récursive est nécessaire avec networkx
+	if bubble:				
+	  graph = simplify_bubbles(solve_bubble(graph,noeud_ancetre, noeud_n))
+	return graph
+
+def drop_entry_tips(graph,list_prec,noeud_n):
+	path_lenght=[]
+	weight_avg_list=[]
+	path_list=[]
+	#len(path_list)=1 car il n'y a plus de bulle
+	for ancestor_node in list_prec:
+		path_list.append(nx.all_simple_paths(graph, source=ancestor_node, target=noeud_n))
+		for i in path_list:
+			lw=[]
+			path_lenght.append(len(i))
+			l=list(graph.subgraph(i).edges(data=True))
+			for j in l:
+				lw.append(j[2]['weight'])
+			weight_avg_list.append(statistics.mean(lw))
+	graph=select_best_path(graph, path_list, path_lenght, weight_avg_list,delete_entry_node=True, delete_sink_node=False)
+	return graph
+
+def drop_out_tips(graph,list_successor,noeud_n):
+	path_lenght=[]
+	weight_avg_list=[]
+	path_list=[]
+	#len(path_list)=1 car il n'y a plus de bulle
+	for ancestor_node in list_prec:
+		path_list.append(nx.all_simple_paths(graph, source=noeud_n, target=list_successor))
+		for i in path_list:
+			lw=[]
+			path_lenght.append(len(i))
+			l=list(graph.subgraph(i).edges(data=True))
+			for j in l:
+				lw.append(j[2]['weight'])
+			weight_avg_list.append(statistics.mean(lw))
+	graph=select_best_path(graph, path_list, path_lenght, weight_avg_list,delete_entry_node=False, delete_sink_node=True)
+	return graph
 
 def solve_entry_tips(graph, starting_nodes):
-    pass
+	tips = False 
+	for i in graph.nodes:
+		noeud_n=i
+		count=0
+		prec_list=[]
+		liste_predecesseurs =list(graph.predecessors(i))
+		if len(liste_predecesseurs) > 1:
+			for j in liste_predecesseurs :
+				if j in starting_nodes:
+					count+=1
+					prec_list.append(j)
+			if count > 1:
+				tips = True
+				break
+		if tips:
+			break
+	if tips:
+	  graph = drop_entry_tips(graph,prec_list,noeud_n)		
+	  graph = solve_entry_tips(graph,starting_nodes)
+	return graph
 
 def solve_out_tips(graph, ending_nodes):
-    pass
+	tips = False 
+	for i in graph.nodes:
+		noeud_n=i
+		count=0
+		successor_list=[]
+		liste_successeurs =list(graph.successors(i))
+		if len(liste_successeurs) > 1:
+			for j in liste_successeurs :
+				if j in ending_nodes:
+					count+=1
+					successor_list.append(j)
+			if count > 1:
+				tips = True
+				break
+		if tips:
+			 break
+	if tips:
+		graph = drop_out_tips(graph,successor_list,noeud_n)		
+		graph = solve_out_tips(graph,ending_nodes)
+	return graph
+
 
 def get_starting_nodes(graph):
 	l_first_nodes=[]
